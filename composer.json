@@ -1,0 +1,18 @@
+{
+    "name": "fluid22/modules",
+    "description": "Module system for developing plugins in WordPress",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Fluid22\\Module\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Preston Lloyd",
+            "email": "preston@fluid22.com"
+        }
+    ],
+    "require": {}
+}
