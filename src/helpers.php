@@ -10,9 +10,9 @@ use League\Container\Container;
  * @return Container
  */
 function container() {
-    if ( ! isset( $_GLOBALS['fluid22_container'] ) ) {
-        $_GLOBALS['fluid22_container'] = new Container();
+    if ( ! is_a( $GLOBALS['fluid22_container'], Container::class ) ) {
+        $GLOBALS['fluid22_container'] = new Container();
     }
 
-    return $_GLOBALS['fluid22_container'];
+    return $GLOBALS['fluid22_container'];
 }
