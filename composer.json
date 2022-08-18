@@ -6,7 +6,10 @@
     "autoload": {
         "psr-4": {
             "Fluid22\\Module\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "authors": [
         {
@@ -14,5 +17,7 @@
             "email": "preston@fluid22.com"
         }
     ],
-    "require": {}
+    "require": {
+        "league/container": "^4.2"
+    }
 }
