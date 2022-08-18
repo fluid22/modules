@@ -27,10 +27,6 @@ class Options
      * @return mixed
      */
     public function __get( $name ) {
-        if ( isset( $this->changed[ $name ] ) ) {
-            return $this->changed[ $name ];
-        }
-
         if ( ! isset( $this->data[ $name ] ) || is_null( $this->data[ $name ] ) ) {
             $this->data[ $name ] = get_option( $this->prefix . $name );
         }
@@ -43,7 +39,7 @@ class Options
      *
      * @param $name
      * @param $value
-     * @return mixed|void
+     * @return void
      */
     public function __set( $name, $value ) {
         $this->data[ $name ] = $value;
