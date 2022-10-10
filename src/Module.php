@@ -16,7 +16,7 @@ abstract class Module
      * @param array $args
      * @return string|false
      */
-    public function get_template( string $template, $args = array() ) {
+    public function get_template(string $template, array $args = array() ) {
         if ( ! empty( $args ) ) {
             extract( $args );
         }
