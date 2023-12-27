@@ -34,6 +34,6 @@ abstract class Module
      * @return string
      */
     protected function get_dir() {
-        return dirname( ( new \ReflectionClass( static::class ) )->getFileName());
+        return dirname( ( new \ReflectionClass( static::class ) )->getFileName() );
     }
 }
