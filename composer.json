@@ -3,13 +3,21 @@
     "description": "Module system for developing plugins in WordPress",
     "type": "library",
     "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Fluid22\\Module\\": "src/"
-        },
-        "files": [
-            "src/helpers.php"
-        ]
+    "version": "1.0.0",
+    "keywords": [
+        "wordpress",
+        "wordpress-plugin",
+        "plugin",
+        "modules",
+        "dependency-injection",
+        "di",
+        "container",
+        "fluid22"
+    ],
+    "homepage": "https://github.com/fluid22/modules",
+    "support": {
+        "issues": "https://github.com/fluid22/modules/issues",
+        "source": "https://github.com/fluid22/modules"
     },
     "authors": [
         {
@@ -18,6 +26,19 @@
         }
     ],
     "require": {
+        "php": "^7.4 || ^8.0",
         "league/container": "^4.2"
+    },
+    "suggest": {
+        "johnpbloch/wordpress": "WordPress core via Composer for local development or tests",
+        "roots/wordpress": "Alternative WordPress core package if you prefer Roots Bedrock-style installs"
+    },
+    "autoload": {
+        "psr-4": {
+            "Fluid22\\Module\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     }
 }

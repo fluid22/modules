@@ -7,23 +7,46 @@ class Options
     protected string $prefix = 'fluid22_';
 
     /**
-     * Data storage for model
+     * Passed to update_option() as the autoload flag.
+     */
+    protected bool $autoload = false;
+
+    /**
+     * In-memory values (logical keys, no prefix).
      *
-     * @var array
+     * @var array<string, mixed>
      */
     protected array $data = array();
 
     /**
-     * Array of changed keys
+     * Keys to persist with update_option on save().
      *
-     * @var array
+     * @var list<string>
      */
     protected array $changed = array();
 
     /**
-     * Get value from data store
+     * Keys to remove with delete_option on save() (set via remove() / __unset).
      *
-     * @param $name
+     * @var array<string, true>
+     */
+    protected array $deleted = array();
+
+    /**
+     * @param string|null $prefix  Override option key prefix; null keeps the class default (or subclass override).
+     * @param bool|null   $autoload Override update_option autoload; null keeps the class default.
+     */
+    public function __construct( ?string $prefix = null, ?bool $autoload = null ) {
+        if ( $prefix !== null ) {
+            $this->prefix = $prefix;
+        }
+        if ( $autoload !== null ) {
+            $this->autoload = $autoload;
+        }
+    }
+
+    /**
+     * @param string $name
      * @return mixed
      */
     public function __get( $name ) {
@@ -35,26 +58,54 @@ class Options
     }
 
     /**
-     * Set value for data store
-     *
-     * @param $name
-     * @param $value
-     * @return void
+     * @param string $name
+     * @param mixed  $value
      */
     public function __set( $name, $value ) {
+        unset( $this->deleted[ $name ] );
+
         $this->data[ $name ] = $value;
 
-        if ( ! in_array( $name, $this->changed ) ) {
+        if ( ! in_array( $name, $this->changed, true ) ) {
             $this->changed[] = $name;
         }
     }
 
     /**
-     * Save changes to options
+     * Drop a key from memory and schedule delete_option on save().
      */
-    public function save() {
+    public function remove( string $name ): void {
+        unset( $this->data[ $name ] );
+        $this->deleted[ $name ] = true;
+        $this->changed = array_values(
+            array_filter(
+                $this->changed,
+                static function ( $key ) use ( $name ) {
+                    return $key !== $name;
+                }
+            )
+        );
+    }
+
+    /**
+     * @param string $name
+     */
+    public function __unset( $name ) {
+        $this->remove( $name );
+    }
+
+    /**
+     * Persist dirty keys and pending deletes, then reset tracking.
+     */
+    public function save(): void {
         foreach ( $this->changed as $key ) {
-            update_option( $this->prefix . $key, $this->data[ $key ], false );
+            update_option( $this->prefix . $key, $this->data[ $key ], $this->autoload );
         }
+        $this->changed = array();
+
+        foreach ( array_keys( $this->deleted ) as $key ) {
+            delete_option( $this->prefix . $key );
+        }
+        $this->deleted = array();
     }
 }
