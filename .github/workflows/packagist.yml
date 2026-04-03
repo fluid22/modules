@@ -1,0 +1,42 @@
+# Notifies Packagist.org to refresh package metadata after pushes.
+#
+# Setup (repository → Settings → Secrets and variables → Actions):
+#   PACKAGIST_USER   — your packagist.org username
+#   PACKAGIST_TOKEN  — API token from https://packagist.org/profile/ (the "safe" token is enough for update-package)
+#
+# Alternative: enable Packagist’s GitHub integration on the package page so Packagist registers its own webhook (no workflow needed).
+
+name: Update Packagist
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    tags:
+      - '**'
+  workflow_dispatch:
+
+concurrency:
+  group: packagist-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: Notify Packagist
+    runs-on: ubuntu-latest
+    if: ${{ secrets.PACKAGIST_USER != '' && secrets.PACKAGIST_TOKEN != '' }}
+    steps:
+      - name: POST update-package
+        env:
+          PACKAGIST_USER: ${{ secrets.PACKAGIST_USER }}
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
+          curl -fsS -X POST \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${PACKAGIST_USER}:${PACKAGIST_TOKEN}" \
+            -H 'User-Agent: fluid22-modules-packagist-hook (+mailto:preston@fluid22.com)' \
+            --data-binary "{\"repository\":\"${REPO_URL}\"}" \
+            https://packagist.org/api/update-package
