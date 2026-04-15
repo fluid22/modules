@@ -4,7 +4,11 @@ namespace Fluid22\Module\Models;
 
 class Options
 {
-    protected string $prefix = 'fluid22_';
+    /**
+     * Option-key prefix. Must be set by a constructor argument or a subclass
+     * override before construction finishes; otherwise the constructor throws.
+     */
+    protected string $prefix = '';
 
     /**
      * Passed to update_option() as the autoload flag.
@@ -33,8 +37,11 @@ class Options
     protected array $deleted = array();
 
     /**
-     * @param string|null $prefix  Override option key prefix; null keeps the class default (or subclass override).
+     * @param string|null $prefix   Option key prefix. Pass null only when a
+     *                              subclass already defines `$prefix`.
      * @param bool|null   $autoload Override update_option autoload; null keeps the class default.
+     *
+     * @throws \InvalidArgumentException When no non-empty prefix is available.
      */
     public function __construct( ?string $prefix = null, ?bool $autoload = null ) {
         if ( $prefix !== null ) {
@@ -42,6 +49,13 @@ class Options
         }
         if ( $autoload !== null ) {
             $this->autoload = $autoload;
+        }
+
+        if ( $this->prefix === '' ) {
+            throw new \InvalidArgumentException(
+                'Fluid22\Module\Models\Options requires a non-empty prefix. '
+                . 'Pass one to the constructor or set $prefix in a subclass.'
+            );
         }
     }
 

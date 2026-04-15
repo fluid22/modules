@@ -31,10 +31,20 @@ use function Fluid22\Module\start;
 start( [
     \MyPlugin\Modules\Assets::class,
     \MyPlugin\Modules\Admin::class,
-] );
+], 'my-plugin' );
 ```
 
-`start()` registers each class with the container, resolves instances in order, and calls `setup()` on every instance that extends `Fluid22\Module\Module`.
+`start()` registers each class with the container identified by the given key, resolves instances in order, and calls `setup()` on every instance that extends `Fluid22\Module\Module`.
+
+**Multiple plugins on one site:** always pass a stable, plugin-specific key (your text domain works well) as the second argument to `start()` and `container()`. Each key gets its own isolated container, so bindings, the autowire setting, and resolved modules never collide across plugins. Omitting the key uses a shared `'default'` bucket — fine for a single consumer, unsafe if other plugins might also use this library.
+
+After all modules have booted, the library fires:
+
+```php
+do_action( 'fluid22_modules_booted', string $key, array $modules );
+```
+
+Use this to sequence cross-plugin wiring.
 
 ### 2. Define a module
 
@@ -82,32 +92,34 @@ Variables are passed as an array; **valid PHP variable names** are **`extract()`
 
 ### 4. Dependency injection
 
-`container()` returns a `League\Container\Container`. By default, `setup_container()` delegates to `League\Container\ReflectionContainer` so constructors can type-hint dependencies when autowiring is enabled.
+`container( string $key = null )` returns the `League\Container\Container` for that key, creating it on first access. By default, `setup_container()` delegates to `League\Container\ReflectionContainer` so constructors can type-hint dependencies when autowiring is enabled.
 
-Disable autowiring:
+Disable autowiring (per-key via the filter’s second argument):
 
 ```php
-add_filter( 'fluid22_container_autowire', '__return_false' );
+add_filter( 'fluid22_container_autowire', function ( bool $enabled, string $key ): bool {
+    return $key === 'my-plugin' ? false : $enabled;
+}, 10, 2 );
 ```
 
-Register bindings before `start()` as needed:
+Register bindings before `start()` against the same key:
 
 ```php
 use function Fluid22\Module\container;
 
-container()->add( \MyPlugin\Contracts\Store::class, \MyPlugin\WpOptionsStore::class );
+container( 'my-plugin' )->add( \MyPlugin\Contracts\Store::class, \MyPlugin\WpOptionsStore::class );
 ```
 
-The container is stored in **`$GLOBALS['fluid22_container']`**.
+Containers are stored in **`$GLOBALS['fluid22_containers']`** keyed by the container key. For back-compat, the default bucket is also mirrored to **`$GLOBALS['fluid22_container']`**.
 
 ## Options model
 
-`Fluid22\Module\Models\Options` is a thin, lazy wrapper over WordPress options with a fixed key prefix (default `fluid22_`).
+`Fluid22\Module\Models\Options` is a thin, lazy wrapper over WordPress options with a required key prefix.
 
 ```php
 use Fluid22\Module\Models\Options;
 
-$opts = new Options( 'myplugin_' ); // optional: prefix; null keeps default / subclass property
+$opts = new Options( 'myplugin_' );
 
 $opts->api_key = 'secret';
 unset( $opts->old_flag ); // or $opts->remove( 'old_flag' );
@@ -117,7 +129,7 @@ $opts->save();
 - Reads load from the database on first access via magic `__get`.
 - Assignments mark keys dirty until `save()` calls `update_option`.
 - `remove()` / `__unset()` queue `delete_option` on the next `save()`.
-- Constructor: `new Options( ?string $prefix, ?bool $autoload )` — pass `null` to keep class defaults (useful when subclassing with a protected `$prefix` default).
+- Constructor: `new Options( ?string $prefix, ?bool $autoload )`. A **non-empty prefix is required** — pass it to the constructor, or define `protected string $prefix = '…';` in a subclass and pass `null`. Constructing without an effective prefix throws `InvalidArgumentException` so plugins can’t accidentally share the same option keys.
 - The **`$autoload`** flag is passed as the third argument to `update_option()` (default `false`).
 
 ## Packagist updates
