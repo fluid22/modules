@@ -25,7 +25,6 @@ jobs:
   update:
     name: Notify Packagist
     runs-on: ubuntu-latest
-    if: ${{ secrets.PACKAGIST_USER != '' && secrets.PACKAGIST_TOKEN != '' }}
     steps:
       - name: POST update-package
         env:
@@ -33,6 +32,10 @@ jobs:
           PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
         run: |
           set -euo pipefail
+          if [ -z "${PACKAGIST_USER}" ] || [ -z "${PACKAGIST_TOKEN}" ]; then
+            echo "PACKAGIST_USER or PACKAGIST_TOKEN is not set; skipping update." >&2
+            exit 0
+          fi
           REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
           curl -fsS -X POST \
             -H 'Content-Type: application/json' \
